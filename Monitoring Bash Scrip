@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Define the email address to send alerts
+EMAIL="ms9450258@gmail.com"
+
+# Define the cron job to run the script every hour at minute 0
+cronjob="0 * * * * /home/mfathy/first_taskbash.sh"
+
+# Check if the cron job already exists, if not, add it
+(crontab -l | grep -F "$cronjob") || (crontab -l; echo "$cronjob") | crontab -
+
+# Colors for alerts
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+RESET=$(tput sgr0)
+# This script will give a warning when the disk space reaches 80 percent.
+
+{
+disk_usage=$(df --output=source,pcent | tail -n +2)
+
+while IFS= read -r line; do
+    usage=$(echo $line | awk '{print $2}' | sed 's/%//')
+
+    if [ "$usage" -ge 80 ]; then
+        echo "The disk ${line%% *} is about to fill up: $usage% used"
+        echo ""
+    fi
+done <<< "$disk_usage"
+
+# This script monitors CPU usage
+
+cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
+
+echo "CPU Usage: $cpu_usage%"
+echo ""
+
+# this to show you Memory Usage like total Memory, used, and free memory
+echo "Memory Usage:"
